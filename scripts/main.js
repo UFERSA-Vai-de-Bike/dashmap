@@ -24,7 +24,7 @@ var typeElem = {
 var ufersaLatLng = [-5.2015139, -37.3254804];
 var hasGeoLoc = false;
 
-var map, mcg, meMarker, markers = [];
+var map, mcg, meMarker, markers = [], welcomeDialog, welcomeBtn, stNearBtn;
 //  map.removeLayer(marker)
 var mPerOptions = {
     title: "Esse é você!",
@@ -45,6 +45,7 @@ function setStMarker(station) {
         {
             id: station.idstation,
             typeElem: typeElem.STATION,
+            dialog: L.control.dialog({initOpen: false}).setContent(setStContent(station)).addTo(map),
             inst: L.marker([station.lat,station.lon],
                 {
                     title: "Estação " + station.name,
@@ -58,7 +59,13 @@ function setStMarker(station) {
                         shadowSize: [64, 50],
                         shadowAnchor: [23, 50]
                     })
-                }).addTo(mcg)
+                }).addTo(mcg).on('click', function(ev) {
+                    for (var i in markers) {
+                        if ((markers[i].id === station.idstation) && (markers[i].typeElem === typeElem.STATION)) {
+                            markers[i].dialog.open();
+                        }
+                    }
+                })
         }
     )
 }
@@ -94,6 +101,19 @@ function initMap() {
 
     mcg = L.markerClusterGroup().addTo(map);
     mcg1 = L.markerClusterGroup().addTo(map);
+
+    welcomeBtn = L.easyButton( '<span class="quest">&quest;</span>', function(){
+        this.disable();
+        welcomeDialog.open();
+      }).addTo(map);
+    welcomeBtn.disable();
+
+    welcomeDialog = L.control.dialog()
+          .setContent(welcontent)
+          .addTo(map);
+
+    
+    map.on('dialog:closed', function(e){welcomeBtn.enable()});
 
     // TESTE AQUI ALLEF 
 
@@ -153,8 +173,27 @@ function loadStations() {
         console.log(res);
         if (res.status === 200) {
             res.json().then(function(res) {
-                // console.log(res);
-                res.data.forEach(setStMarker);
+                console.log(res.data);
+                if (res.data.length) {
+                    if (stNearBtn) {
+                        stNearBtn.enable();
+                    } else {
+                        stNearBtn =  L.easyButton( '<img class="img-btn" src="/assets/get-bike.png">', function(){
+                            this.disable();
+                            if(meMarker) {
+                                toNeareSt(meMarker.getLatLng());
+                            }
+                          }).addTo(map);
+                    }
+                } else {
+                    if (stNearBtn) {
+                        stNearBtn.disable();
+                    }
+                }
+                res.data.forEach(function(station){
+                    updMarkers(station,typeElem.STATION);
+                });
+                // todo start thread
             });
         }
     });
@@ -163,11 +202,13 @@ function loadBikesOnRide() {
     fetch(baseUrl + "bikes/onride",myGet).then(function (response) {
         return response;
     }).then(function (res) {
-        console.log(res);
         if (res.status === 200) {
             res.json().then(function(res) {
-                console.log(res);
-                res.data.forEach(setBkMarker);
+                // console.log(res.data);
+                res.data.forEach(function (bike) {
+                    updMarkers(bike,typeElem.BIKE);
+                });
+                // todo start thread
             });
         }
     });
@@ -183,16 +224,77 @@ function checkGeoLocation() {
 }
 
 function geo_success(position) {
-    // console.log("Nova posição");
-    // console.log(position);
     if (meMarker) {
         meMarker.setLatLng([position.coords.latitude,position.coords.longitude]);
     } else {
+        console.log(position.coords);
         meMarker = L.marker([position.coords.latitude,position.coords.longitude],mPerOptions).addTo(map);
-        // map.flyTo(meMarker.getLatLng());
+        map.flyTo(meMarker.getLatLng());
+        // todo load easy button
+        loadEasybtnPerson();
     }
 }
 function geo_error(positionError) {
     console.log(positionError);
+}
 
+function loadEasybtnPerson() {
+    L.easyButton( '<span class="target">&target;</span>', function(){
+        map.flyTo(meMarker.getLatLng());
+      }).addTo(map);
+}
+
+
+var welcontent = ['<h2>UFERSA Vai de Bike</h2><p>Bem vindo ao mapa do sistema UFERSA Vai de bike.',
+                '</p><p>Abaixo segue uma breve legenda.</p>',
+                '<table><tr><th>Ícone</th><th>Significado</th></tr>',
+                '<tr><td><img class="leg" src="/assets/marker-person.png"></td>',
+                '<td>Sua localização se disponível.</td></tr>',
+                '<tr><td><img class="leg" src="/assets/marker-station.png"></td>',
+                '<td>Estação de bicicletas, clique em alguma para obter informações.</td></tr>',
+                '<tr><td><img class="leg" src="/assets/marker-bike.png"></td>',
+                '<td>Bicicletas em uso no momento.</td></tr>',
+                '<tr><td><span class="target-leg">&target;</span></td>',
+                '<td>Centraliza o mapa na sua ĺocalização.</td></tr>',
+                '<tr><td><img class="leg" src="/assets/get-bike.png"></td>',
+                '<td>Centraliza o mapa na estação mais próxima com bicicletas disponíveis.</td></tr>',
+                '<tr><td><span class="quest-leg">&quest;</span></td>',
+                '<td>Abre esta caixa de diálogo.</td></tr>',
+                '</table>'].join('');
+
+
+function setStContent(station) {
+
+    var content = '<h2>Estação '+station.name+'</h2>';
+
+    /* '<table><tr><th>Estado</th><th>Significado</th><th>Significado</th></tr>',
+        '<tr><td><img class="leg" src="/assets/marker-person.png"></td>',
+    '<td>Sua localização se disponível.</td></tr>',
+                '<tr><td><img class="leg" src="/assets/marker-station.png"></td>',
+                '<td>Estação de bicicletas, clique em alguma para obter informações.</td></tr>',
+                '<tr><td><img class="leg" src="/assets/marker-bike.png"></td>',
+                '<td>Bicicletas em uso no momento.</td></tr>',
+                '<tr><td><span class="target-leg">&target;</span></td>',
+                '<td>Centraliza o mapa na sua ĺocalização.</td></tr>',
+                '<tr><td><img class="leg" src="/assets/get-bike.png"></td>',
+                '<td>Centraliza o mapa na estação mais próxima com bicicletas disponíveis.</td></tr>',
+                '<tr><td><span class="target-leg">&quest;</span></td>',
+                '<td>Abre esta caixa de diálogo.</td></tr>',
+                '</table>' */
+
+    return content;
+}
+
+
+function updMarkers(item,type) {
+    for (var i in markers) {
+        if ((markers[i].typeElem === type) &&
+            (markers[i].id === item[((type === typeElem.BIKE) ? "idbike":"idstation")])) {
+                markers[i].dialog.setContent(setStContent(item))
+                .setPopupContent(((type === typeElem.BIKE)?"Bike ":"Estação ") + item.name);
+                markers[i].inst.setLatLng([item.lat,item.lon]);
+                return;
+        }
+    }
+    (type === typeElem.BIKE) ? setBkMarker(item): setStMarker(item);
 }
