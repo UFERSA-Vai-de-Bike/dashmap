@@ -7,7 +7,7 @@ window.onload = function() {
 }
 
 // Configuração de rede
-var baseUrl = "http://192.168.0.110:3000/api/";
+var baseUrl = "http://localhost:3000/api/";
 var myHeaders = new Headers();
 var myGet = { method: 'GET',
                headers: myHeaders,
@@ -114,6 +114,21 @@ function initMap() {
 
     
     map.on('dialog:closed', function(e){welcomeBtn.enable()});
+
+
+    L.control.custom({
+        position: 'bottomright',
+        content : '<img src="/assets/logo.png" class="img-thumbnail">',
+        style   :
+        {
+            height: '100px',
+            width: '100px',
+            margin: '0px 20px 20px 0',
+            padding: '0px',
+        },
+    })
+    .addTo(map);
+
 
     // TESTE AQUI ALLEF 
 
@@ -298,3 +313,168 @@ function updMarkers(item,type) {
     }
     (type === typeElem.BIKE) ? setBkMarker(item): setStMarker(item);
 }
+
+
+
+var stationsStub = [
+    {
+        "idstation": 3,
+        "name": "Sang",
+        "lat": -5.203151,
+        "lon": -37.327629,
+        "slots": [
+            {
+                "f1": 3,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 4,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 2,
+                "f2": true,
+                "f3": true
+            },
+            {
+                "f1": 1,
+                "f2": true,
+                "f3": false
+            }
+        ]
+    },
+    {
+        "idstation": 4,
+        "name": "Milda",
+        "lat": -5.201565,
+        "lon": -37.325744,
+        "slots": [
+            {
+                "f1": 3,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 4,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 1,
+                "f2": true,
+                "f3": true
+            },
+            {
+                "f1": 2,
+                "f2": true,
+                "f3": true
+            }
+        ]
+    },
+    {
+        "idstation": 2,
+        "name": "Olimpia",
+        "lat": -5.207059,
+        "lon": -37.323857,
+        "slots": [
+            {
+                "f1": 3,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 4,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 2,
+                "f2": true,
+                "f3": true
+            },
+            {
+                "f1": 1,
+                "f2": true,
+                "f3": false
+            }
+        ]
+    },
+    {
+        "idstation": 1,
+        "name": "Aliada",
+        "lat": -5.20437,
+        "lon": -37.323554,
+        "slots": [
+            {
+                "f1": 3,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 4,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 1,
+                "f2": true,
+                "f3": false
+            },
+            {
+                "f1": 2,
+                "f2": true,
+                "f3": false
+            }
+        ]
+    }
+]
+
+
+var bikeStub = [
+    {
+        "idbike": 1,
+        "idstation": 1,
+        "name": "Eugena",
+        "regdate": "2018-09-03T03:39:38.732Z",
+        "lat": -5.204424,
+        "lon": -37.323591,
+        "slot": 1,
+        "state": true,
+        "onride": true
+    },
+    {
+        "idbike": 2,
+        "idstation": 1,
+        "name": "Leanne",
+        "regdate": "2018-09-03T03:39:38.743Z",
+        "lat": -5.204663,
+        "lon": -37.32325,
+        "slot": 2,
+        "state": true,
+        "onride": true
+    },
+    {
+        "idbike": 3,
+        "idstation": 2,
+        "name": "Tawana",
+        "regdate": "2018-09-03T03:39:38.754Z",
+        "lat": -5.206759,
+        "lon": -37.323583,
+        "slot": 1,
+        "state": true,
+        "onride": true
+    },
+    {
+        "idbike": 5,
+        "idstation": 3,
+        "name": "Loraine",
+        "regdate": "2018-09-03T03:39:38.776Z",
+        "lat": -5.203072,
+        "lon": -37.32763,
+        "slot": 1,
+        "state": true,
+        "onride": true
+    }
+]
