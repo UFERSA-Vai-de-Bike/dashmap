@@ -15,18 +15,19 @@ var myGet = { method: 'GET',
                mode: 'cors', 
                cache: 'default' };
 
-// configuração de tipo
+// configuração de tipos
 var typeElem = {
     BIKE: 1,
     STATION: 2 
 }
 
-// labuta do mapa
+//  localização da ufersa (testes)
 var ufersaLatLng = [-5.2015139, -37.3254804];
-var hasGeoLoc = false;
 
+// variáveis do mapa
 var map, mcg, meMarker, markers = [], welcomeDialog, welcomeBtn, stNearBtn;
-//  map.removeLayer(marker)
+
+// Configuração do marker do usuário
 var mPerOptions = {
     title: "Esse é você!",
     riseOnHover: true,
@@ -41,6 +42,7 @@ var mPerOptions = {
     })
 }
 
+// configuração do marker das estações
 function setStMarker(station) {
     markers.push(
         {
@@ -72,7 +74,7 @@ function setStMarker(station) {
         }
     )
 }
-
+// configuração do marker das bicicletas
 function setBkMarker(bike) {
     markers.push(
         {
@@ -97,29 +99,35 @@ function setBkMarker(bike) {
     )
 }
 
+// configuração do mapa
 function initMap() {
     map = L.map('mapid').setView(ufersaLatLng, 17); // zoom max 18
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
+    // markerscluster
     mcg = L.markerClusterGroup().addTo(map);
     mcg1 = L.markerClusterGroup().addTo(map);
 
+    // botão da dialog de legenda
     welcomeBtn = L.easyButton( '<span class="quest">&quest;</span>', function(){
         this.disable();
         welcomeDialog.open();
       }).addTo(map);
     welcomeBtn.disable();
 
+    // dialog de legenda
     welcomeDialog = L.control.dialog()
           .setContent(welcontent)
           .addTo(map);
-
     
-    map.on('dialog:closed', function(e){welcomeBtn.enable()});
+    map.on('dialog:closed', function(e){
+        if (e._leaflet_id === 72) welcomeBtn.enable();
+    });
 
 
+    // logo do projeto
     L.control.custom({
         position: 'bottomright',
         content : '<img src="/assets/logo.png" class="img-thumbnail">',
@@ -170,6 +178,7 @@ function initMap() {
     //     }).addTo(map).bindPopup('Olá Allef!');
 }
 
+// conexão primária coma a API
 function checkAPI() {
     fetch(baseUrl,myGet).then(function (response) {
         return response;
@@ -178,27 +187,30 @@ function checkAPI() {
             res.text().then(function(data) {
                 console.log(data);
             });
-            // mete brasa
+            // requisiçoes
             loadStations();
             loadBikesOnRide();
-            callThread();
+
+            // chamando loop de requisição
+            // callThread();
         }
     });
 }
 
+// loop de requisição
 function callThread() {
-    setTimeout(checkAPI,3000);
-    // checkAPI();
+    setTimeout(checkAPI,5000);
 }
 
+// requisição para carregar as estações válidas
 function loadStations() {
     fetch(baseUrl + "stations/val",myGet).then(function (response) {
         return response;
     }).then(function (res) {
-        console.log(res);
+        // console.log(res);
         if (res.status === 200) {
             res.json().then(function(res) {
-                console.log(res.data);
+                // console.log(res.data);
                 if (res.data.length) {
                     if (stNearBtn) {
                         stNearBtn.enable();
@@ -226,6 +238,7 @@ function loadStations() {
         }
     });
 }
+// função para centralizar o mapa na estação mais próxima do usuário
 function toNeareSt(latLng) {
     var mindif = 99999;
     var closest;
@@ -234,8 +247,7 @@ function toNeareSt(latLng) {
         if (item.typeElem === typeElem.STATION) {
             stMarkers.push(item.inst.getLatLng());
         }
-    })
-    // console.log(stMarkers);
+    });
     for (var i in stMarkers) {
       var dif = PythagorasEquirectangular(latLng, stMarkers[i]);
       if (dif < mindif) {
@@ -243,15 +255,16 @@ function toNeareSt(latLng) {
         mindif = dif;
       }
     }
-    console.log(closest);
+    // console.log(closest);
     map.flyTo(stMarkers[closest]);
     stNearBtn.enable();
-  }
+}
+// funções auxiliares
 // Convert Degress to Radians
 function Deg2Rad(deg) {
     return deg * Math.PI / 180;
-  }
-  function PythagorasEquirectangular(latLng, latLng1) {
+}
+function PythagorasEquirectangular(latLng, latLng1) {
     var lat1 = Deg2Rad(latLng.lat);
     var lat2 = Deg2Rad(latLng1.lat);
     var lng1 = Deg2Rad(latLng.lng);
@@ -261,7 +274,10 @@ function Deg2Rad(deg) {
     var y = (lat2 - lat1);
     var d = Math.sqrt(x * x + y * y) * R;
     return d;
-  }
+}
+
+
+// requisição para carregar as bicicletas
 function loadBikesOnRide() {
     fetch(baseUrl + "bikes/onride",myGet).then(function (response) {
         return response;
@@ -291,7 +307,7 @@ function geo_success(position) {
     if (meMarker) {
         meMarker.setLatLng([position.coords.latitude,position.coords.longitude]);
     } else {
-        console.log(position.coords);
+        // console.log(position.coords);
         meMarker = L.marker([position.coords.latitude,position.coords.longitude],mPerOptions).addTo(map);
         map.flyTo(meMarker.getLatLng());
         // todo load easy button
@@ -355,6 +371,9 @@ function setStContent(station) {
 
     var ct = '<h2>Estação '+station.name+'</h2>';
     if (station.slots.length) {
+        ct += '<div style="text-align: right;">'
+        ct += '<h5>間 Vazio</h5>'
+        ct += '<h5><i class="fa fa-bicycle" aria-hidden="true"> Bicicleta disponível</h5></div>'
         ct += '<table><tr><th style="text-align: center;">Vaga</th><th style="text-align: center;">Estado</th></tr>';
 
         station.slots.forEach(function(slot){
@@ -362,9 +381,6 @@ function setStContent(station) {
             ct += '<td>'+( slot.f2 ? '<i class="fa fa-bicycle fa-2x" aria-hidden="true"></i>' : '<h3>間</h3>' )+'</td></tr>';
         })
         ct += '</table>'
-        ct += '<div style="text-align: right;">'
-        ct += '<h5>間 Vazio</h5>'
-        ct += '<h5><i class="fa fa-bicycle" aria-hidden="true"> Bicicleta disponível</h5></div>'
     } else {
         ct += '<p>Nenhuma informação disponível</p>'
     }
