@@ -4,6 +4,7 @@ window.onload = function() {
     initMap();
     checkGeoLocation();
     checkAPI();
+    // loadStub();
 }
 
 // Configuração de rede
@@ -45,6 +46,8 @@ function setStMarker(station) {
         {
             id: station.idstation,
             typeElem: typeElem.STATION,
+            name: station.name,
+            slots: station.slots,
             dialog: L.control.dialog({initOpen: false}).setContent(setStContent(station)).addTo(map),
             inst: L.marker([station.lat,station.lon],
                 {
@@ -74,6 +77,7 @@ function setBkMarker(bike) {
     markers.push(
         {
             id: bike.idbike,
+            name: bike.name,
             typeElem: typeElem.BIKE,
             inst: L.marker([bike.lat,bike.lon],
                 {
@@ -177,8 +181,14 @@ function checkAPI() {
             // mete brasa
             loadStations();
             loadBikesOnRide();
+            callThread();
         }
     });
+}
+
+function callThread() {
+    setTimeout(checkAPI,3000);
+    // checkAPI();
 }
 
 function loadStations() {
@@ -206,6 +216,9 @@ function loadStations() {
                     }
                 }
                 res.data.forEach(function(station){
+                    station.slots = station.slots.sort(function(a,b){
+                        return a.f1 - b.f1;
+                    }); 
                     updMarkers(station,typeElem.STATION);
                 });
                 // todo start thread
@@ -213,6 +226,42 @@ function loadStations() {
         }
     });
 }
+function toNeareSt(latLng) {
+    var mindif = 99999;
+    var closest;
+    var stMarkers = [];
+    markers.forEach(function(item){
+        if (item.typeElem === typeElem.STATION) {
+            stMarkers.push(item.inst.getLatLng());
+        }
+    })
+    // console.log(stMarkers);
+    for (var i in stMarkers) {
+      var dif = PythagorasEquirectangular(latLng, stMarkers[i]);
+      if (dif < mindif) {
+        closest = i;
+        mindif = dif;
+      }
+    }
+    console.log(closest);
+    map.flyTo(stMarkers[closest]);
+    stNearBtn.enable();
+  }
+// Convert Degress to Radians
+function Deg2Rad(deg) {
+    return deg * Math.PI / 180;
+  }
+  function PythagorasEquirectangular(latLng, latLng1) {
+    var lat1 = Deg2Rad(latLng.lat);
+    var lat2 = Deg2Rad(latLng1.lat);
+    var lng1 = Deg2Rad(latLng.lng);
+    var lng2 = Deg2Rad(latLng1.lng);
+    var R = 6371; // km
+    var x = (lng2 - lng1) * Math.cos((lat1 + lat2) / 2);
+    var y = (lat2 - lat1);
+    var d = Math.sqrt(x * x + y * y) * R;
+    return d;
+  }
 function loadBikesOnRide() {
     fetch(baseUrl + "bikes/onride",myGet).then(function (response) {
         return response;
@@ -259,10 +308,73 @@ function loadEasybtnPerson() {
       }).addTo(map);
 }
 
+function updMarkers(item,type) {
+    for (var i in markers) {
+        if ((markers[i].typeElem === type) &&
+            (markers[i].id === item[((type === typeElem.BIKE) ? "idbike":"idstation")])) {
+                
+                if (type === typeElem.STATION){
+                    if (markers[i].slots.length !== item.slots.length) {
+                        var isClose =  markers[i].dialog.isClose();
+                        markers[i].dialog.setContent(setStContent(item));
+                        if (isClose) markers[i].dialog.close();
+                    } else {
+                        for (var k in item.slots) {
+                            if (markers[i].slots[k].f2 !== item.slots[k]) {
+                                var isClose =  markers[i].dialog.isClose();
+                                markers[i].dialog.setContent(setStContent(item));
+                                if (isClose) markers[i].dialog.close();
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (markers[i].name !== item.name) {
+                    markers[i].name = item.name
+                    markers[i].inst.setTooltipContent(((type === typeElem.BIKE)?"Bike ":"Estação ") + item.name);
+                }
+
+                var latLng = markers[i].inst.getLatLng() 
+                if ((latLng.lat !== item.lat) || (latLng.lng !== item.lon))
+                    markers[i].inst.setLatLng([item.lat,item.lon]);
+                return;
+        }
+    }
+    (type === typeElem.BIKE) ? setBkMarker(item): setStMarker(item);
+}
+
+function loadStub() {
+    var contentSt = setStContent(stationsStub[2]);
+
+
+    document.getElementById("mapid").innerHTML = contentSt;
+}
+
+function setStContent(station) {
+
+    var ct = '<h2>Estação '+station.name+'</h2>';
+    if (station.slots.length) {
+        ct += '<table><tr><th style="text-align: center;">Vaga</th><th style="text-align: center;">Estado</th></tr>';
+
+        station.slots.forEach(function(slot){
+            ct += '<tr><td>'+slot.f1+'</td>';
+            ct += '<td>'+( slot.f2 ? '<i class="fa fa-bicycle fa-2x" aria-hidden="true"></i>' : '<h3>間</h3>' )+'</td></tr>';
+        })
+        ct += '</table>'
+        ct += '<div style="text-align: right;">'
+        ct += '<h5>間 Vazio</h5>'
+        ct += '<h5><i class="fa fa-bicycle" aria-hidden="true"> Bicicleta disponível</h5></div>'
+    } else {
+        ct += '<p>Nenhuma informação disponível</p>'
+    }
+
+    return ct;
+}
 
 var welcontent = ['<h2>UFERSA Vai de Bike</h2><p>Bem vindo ao mapa do sistema UFERSA Vai de bike.',
                 '</p><p>Abaixo segue uma breve legenda.</p>',
-                '<table><tr><th>Ícone</th><th>Significado</th></tr>',
+                '<table><tr><th style="text-align: center;">Ícone</th><th style="text-align: center;">Significado</th></tr>',
                 '<tr><td><img class="leg" src="/assets/marker-person.png"></td>',
                 '<td>Sua localização se disponível.</td></tr>',
                 '<tr><td><img class="leg" src="/assets/marker-station.png"></td>',
@@ -278,44 +390,6 @@ var welcontent = ['<h2>UFERSA Vai de Bike</h2><p>Bem vindo ao mapa do sistema UF
                 '</table>'].join('');
 
 
-function setStContent(station) {
-
-    var content = '<h2>Estação '+station.name+'</h2>';
-
-    /* '<table><tr><th>Estado</th><th>Significado</th><th>Significado</th></tr>',
-        '<tr><td><img class="leg" src="/assets/marker-person.png"></td>',
-    '<td>Sua localização se disponível.</td></tr>',
-                '<tr><td><img class="leg" src="/assets/marker-station.png"></td>',
-                '<td>Estação de bicicletas, clique em alguma para obter informações.</td></tr>',
-                '<tr><td><img class="leg" src="/assets/marker-bike.png"></td>',
-                '<td>Bicicletas em uso no momento.</td></tr>',
-                '<tr><td><span class="target-leg">&target;</span></td>',
-                '<td>Centraliza o mapa na sua ĺocalização.</td></tr>',
-                '<tr><td><img class="leg" src="/assets/get-bike.png"></td>',
-                '<td>Centraliza o mapa na estação mais próxima com bicicletas disponíveis.</td></tr>',
-                '<tr><td><span class="target-leg">&quest;</span></td>',
-                '<td>Abre esta caixa de diálogo.</td></tr>',
-                '</table>' */
-
-    return content;
-}
-
-
-function updMarkers(item,type) {
-    for (var i in markers) {
-        if ((markers[i].typeElem === type) &&
-            (markers[i].id === item[((type === typeElem.BIKE) ? "idbike":"idstation")])) {
-                markers[i].dialog.setContent(setStContent(item))
-                .setPopupContent(((type === typeElem.BIKE)?"Bike ":"Estação ") + item.name);
-                markers[i].inst.setLatLng([item.lat,item.lon]);
-                return;
-        }
-    }
-    (type === typeElem.BIKE) ? setBkMarker(item): setStMarker(item);
-}
-
-
-
 var stationsStub = [
     {
         "idstation": 3,
@@ -324,24 +398,20 @@ var stationsStub = [
         "lon": -37.327629,
         "slots": [
             {
-                "f1": 3,
-                "f2": true,
-                "f3": false
-            },
-            {
-                "f1": 4,
-                "f2": true,
-                "f3": false
+                "f1": 1,
+                "f2": false
             },
             {
                 "f1": 2,
-                "f2": true,
-                "f3": true
+                "f2": true
             },
             {
-                "f1": 1,
-                "f2": true,
-                "f3": false
+                "f1": 3,
+                "f2": false
+            },
+            {
+                "f1": 4,
+                "f2": false
             }
         ]
     },
@@ -352,24 +422,20 @@ var stationsStub = [
         "lon": -37.325744,
         "slots": [
             {
-                "f1": 3,
-                "f2": true,
-                "f3": false
-            },
-            {
-                "f1": 4,
-                "f2": true,
-                "f3": false
-            },
-            {
                 "f1": 1,
-                "f2": true,
-                "f3": true
+                "f2": false
             },
             {
                 "f1": 2,
-                "f2": true,
-                "f3": true
+                "f2": false
+            },
+            {
+                "f1": 3,
+                "f2": true
+            },
+            {
+                "f1": 4,
+                "f2": true
             }
         ]
     },
@@ -380,24 +446,20 @@ var stationsStub = [
         "lon": -37.323857,
         "slots": [
             {
-                "f1": 3,
-                "f2": true,
-                "f3": false
-            },
-            {
-                "f1": 4,
-                "f2": true,
-                "f3": false
+                "f1": 1,
+                "f2": false
             },
             {
                 "f1": 2,
-                "f2": true,
-                "f3": true
+                "f2": false
             },
             {
-                "f1": 1,
-                "f2": true,
-                "f3": false
+                "f1": 4,
+                "f2": true
+            },
+            {
+                "f1": 4,
+                "f2": false
             }
         ]
     },
@@ -408,24 +470,20 @@ var stationsStub = [
         "lon": -37.323554,
         "slots": [
             {
-                "f1": 3,
-                "f2": true,
-                "f3": false
-            },
-            {
-                "f1": 4,
-                "f2": true,
-                "f3": false
-            },
-            {
                 "f1": 1,
-                "f2": true,
-                "f3": false
+                "f2": false
             },
             {
                 "f1": 2,
-                "f2": true,
-                "f3": false
+                "f2": false
+            },
+            {
+                "f1": 3,
+                "f2": false
+            },
+            {
+                "f1": 4,
+                "f2": false
             }
         ]
     }
