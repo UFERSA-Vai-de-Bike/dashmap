@@ -1,8 +1,10 @@
-html, body {
-    margin: 0px;
-    padding: 0px;
-    width: 100%;
+body {
+    padding: 0;
+    margin: 0;
+}
+html, body, #map {
     height: 100%;
+    width: 100vw;
 }
 #mapid {
     position: relative;

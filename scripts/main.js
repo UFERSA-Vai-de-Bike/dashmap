@@ -12,7 +12,6 @@ var baseUrl = "http://localhost:3000/api/";
 var myHeaders = new Headers();
 var myGet = { method: 'GET',
                headers: myHeaders,
-               mode: 'cors', 
                cache: 'default' };
 
 // configuração de tipos
@@ -50,7 +49,7 @@ function setStMarker(station) {
             typeElem: typeElem.STATION,
             name: station.name,
             slots: station.slots,
-            dialog: L.control.dialog({initOpen: false}).setContent(setStContent(station)).addTo(map),
+            dialog: L.control.dialog({initOpen: false,anchor:[3,50],position: 'topleft'}).setContent(setStContent(station)).addTo(map),
             inst: L.marker([station.lat,station.lon],
                 {
                     title: "Estação " + station.name,
@@ -64,7 +63,7 @@ function setStMarker(station) {
                         shadowSize: [64, 50],
                         shadowAnchor: [23, 50]
                     })
-                }).addTo(mcg).on('click', function(ev) {
+                }).bindPopup("<h5>Estação "+ station.name+ "</h5>").addTo(mcg).on('click', function(ev) {
                     for (var i in markers) {
                         if ((markers[i].id === station.idstation) && (markers[i].typeElem === typeElem.STATION)) {
                             markers[i].dialog.open();
@@ -94,7 +93,7 @@ function setBkMarker(bike) {
                         shadowSize: [64, 50],
                         shadowAnchor: [23, 50]
                     })
-                }).addTo(mcg1)
+                }).bindPopup("<h5>Bike "+ bike.name+ "</h5>").addTo(mcg1)
         }
     )
 }
@@ -118,7 +117,7 @@ function initMap() {
     welcomeBtn.disable();
 
     // dialog de legenda
-    welcomeDialog = L.control.dialog()
+    welcomeDialog = L.control.dialog({anchor:[3,50],position: 'topleft'})
           .setContent(welcontent)
           .addTo(map);
     
@@ -308,7 +307,7 @@ function geo_success(position) {
         meMarker.setLatLng([position.coords.latitude,position.coords.longitude]);
     } else {
         // console.log(position.coords);
-        meMarker = L.marker([position.coords.latitude,position.coords.longitude],mPerOptions).addTo(map);
+        meMarker = L.marker([position.coords.latitude,position.coords.longitude],mPerOptions).bindPopup("<h5>Este é você</h5>").addTo(map);
         map.flyTo(meMarker.getLatLng());
         // todo load easy button
         loadEasybtnPerson();
@@ -348,7 +347,9 @@ function updMarkers(item,type) {
                 
                 if (markers[i].name !== item.name) {
                     markers[i].name = item.name
-                    markers[i].inst.setTooltipContent(((type === typeElem.BIKE)?"Bike ":"Estação ") + item.name);
+                    var typeName = ((type === typeElem.BIKE)?"Bike ":"Estação ") + item.name;
+                    markers[i].inst.setTooltipContent(typeName);
+                    markers[i].inst.setPopupContent("<h5>"+typeName+"</h5>");
                 }
 
                 var latLng = markers[i].inst.getLatLng() 
@@ -361,10 +362,33 @@ function updMarkers(item,type) {
 }
 
 function loadStub() {
-    var contentSt = setStContent(stationsStub[2]);
+    // var contentSt = setStContent(stationsStub[2]);
+    // console.log(res.data);
+    if (stationsStub.length) {
+        if (stNearBtn) {
+            stNearBtn.enable();
+        } else {
+            stNearBtn =  L.easyButton( '<img class="img-btn" src="/assets/get-bike.png">', function(){
+                this.disable();
+                if(meMarker) {
+                    toNeareSt(meMarker.getLatLng());
+                }
+              }).addTo(map);
+        }
+    } else {
+        if (stNearBtn) {
+            stNearBtn.disable();
+        }
+    }
+    stationsStub.forEach(function (station) {
+        updMarkers(station,typeElem.STATION);
+    });
+    bikeStub.forEach(function (bike){
+        updMarkers(bike,typeElem.BIKE);
+    });
 
 
-    document.getElementById("mapid").innerHTML = contentSt;
+    // document.getElementById("mapid").innerHTML = contentSt;
 }
 
 function setStContent(station) {
