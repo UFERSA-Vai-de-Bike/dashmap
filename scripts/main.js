@@ -3,12 +3,12 @@ window.onload = function() {
     console.log('Window is loaded!' );
     initMap();
     checkGeoLocation();
-    checkAPI();
-    // loadStub();
+    // checkAPI();
+    loadStub();
 }
 
 // Configuração de rede
-var baseUrl = "http://localhost:3000/api/";
+var baseUrl = "http://10.215.104.162:3000/api/";
 var myHeaders = new Headers();
 var myGet = { method: 'GET',
                headers: myHeaders,
@@ -191,12 +191,12 @@ function checkAPI() {
             loadBikesOnRide();
 
             // chamando loop de requisição
-            // callThread();
+            callThread();
         }
     });
 }
 
-// loop de requisição
+// loop de requisição, a cada 5 segundos requisita novamente
 function callThread() {
     setTimeout(checkAPI,5000);
 }
@@ -206,7 +206,6 @@ function loadStations() {
     fetch(baseUrl + "stations/val",myGet).then(function (response) {
         return response;
     }).then(function (res) {
-        // console.log(res);
         if (res.status === 200) {
             res.json().then(function(res) {
                 // console.log(res.data);
@@ -232,7 +231,6 @@ function loadStations() {
                     }); 
                     updMarkers(station,typeElem.STATION);
                 });
-                // todo start thread
             });
         }
     });
@@ -283,11 +281,9 @@ function loadBikesOnRide() {
     }).then(function (res) {
         if (res.status === 200) {
             res.json().then(function(res) {
-                // console.log(res.data);
                 res.data.forEach(function (bike) {
                     updMarkers(bike,typeElem.BIKE);
                 });
-                // todo start thread
             });
         }
     });
