@@ -3,15 +3,15 @@ window.onload = function() {
     console.log('Window is loaded!' );
     initMap();
     checkGeoLocation();
-    checkAPI();
-    // loadStub();
+    // checkAPI();
+    loadStub();
 }
 
 // para ligar o loop de requisições
-var threadOn = false;
+var threadOn = true;
 
 // Configuração de rede
-var baseUrl = "http://10.215.104.162:3000/api/";
+var baseUrl = "http://localhost:3000/api/";
 var myHeaders = new Headers();
 var myGet = { method: 'GET',
                headers: myHeaders,
@@ -27,7 +27,7 @@ var typeElem = {
 var ufersaLatLng = [-5.2015139, -37.3254804];
 
 // variáveis do mapa
-var map, mcg, meMarker, markers = [], welcomeDialog, welcomeBtn, stNearBtn;
+var map, mcg, meMarker, markers = [], markersBkStub = [], welcomeDialog, welcomeBtn, stNearBtn;
 
 // Configuração do marker do usuário
 var mPerOptions = {
@@ -387,9 +387,45 @@ function loadStub() {
         updMarkers(bike,typeElem.BIKE);
     });
 
+    markersBkStub = markers.filter(function(marker){
+        return marker.typeElem === typeElem.BIKE;
+    });
+
+    setTimeout(callThreadStub,5000);
 
     // document.getElementById("mapid").innerHTML = contentSt;
 }
+
+var LatLngs = {
+    "Eugena" : [[-5.204424, -37.323591],[5.204018, -37.324184],
+                [-5.203671, -37.324697],[-5.203450, -37.325152],
+                [-5.203920, -37.325377],[-5.204347, -37.324948],
+                [-5.204924, -37.324117],[-5.204790, -37.323342]],
+    "Leanne" : [[-5.204663, -37.323250],[-5.204857, -37.322978],
+                [-5.205025, -37.322713],[-5.204871, -37.322603],
+                [-5.204671, -37.322568],[-5.204476, -37.322846],
+                [-5.204381, -37.323038],[-5.204518, -37.323142]],
+    "Tawana" : [[-5.206759, -37.323583],[-5.207230, -37.322935],
+                [-5.207388, -37.322224],[-5.206800, -37.322406],
+                [-5.206552, -37.322254],[-5.207003, -37.321896],
+                [-5.206439, -37.322862],[-5.206170, -37.323212]],
+    "Loraine": [[-5.203072, -37.327630],[-5.203547, -37.328208],
+                [-5.204170, -37.328853],[-5.204463, -37.328584],
+                [-5.204703, -37.328305],[-5.204495, -37.327991],
+                [-5.203907, -37.327382],[-5.203375, -37.327251]]
+} 
+
+var loopStub = 0;
+function callThreadStub() {
+    
+    markersBkStub.forEach(function(mBike){
+        mBike.inst.setLatLng(LatLngs[mBike.name][loopStub]);
+    });
+    ((loopStub < 7) ? (loopStub++) : (loopStub = 0));
+
+    setTimeout(callThreadStub,5000);
+}
+
 
 function setStContent(station) {
 
