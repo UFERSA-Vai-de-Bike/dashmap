@@ -3,9 +3,12 @@ window.onload = function() {
     console.log('Window is loaded!' );
     initMap();
     checkGeoLocation();
-    // checkAPI();
-    loadStub();
+    checkAPI();
+    // loadStub();
 }
+
+// para ligar o loop de requisições
+var threadOn = false;
 
 // Configuração de rede
 var baseUrl = "http://10.215.104.162:3000/api/";
@@ -191,7 +194,8 @@ function checkAPI() {
             loadBikesOnRide();
 
             // chamando loop de requisição
-            callThread();
+            if (threadOn)
+                callThread();
         }
     });
 }
