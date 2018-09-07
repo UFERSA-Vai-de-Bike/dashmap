@@ -257,7 +257,7 @@ function toNeareSt(latLng) {
       }
     }
     // console.log(closest);
-    map.flyTo(stMarkers[closest]);
+    map.flyTo(stMarkers[closest],18);
     stNearBtn.enable();
 }
 // funções auxiliares
@@ -449,7 +449,9 @@ function setStContent(station) {
 }
 
 var welcontent = ['<h2>UFERSA Vai de Bike</h2><p>Bem vindo ao mapa do sistema UFERSA Vai de bike.',
-                '</p><p>Abaixo segue uma breve legenda.</p>',
+
+                '<p><b>Isto é só uma simulação!</b> Não é o sistema em funcionamento.</p>',
+                '<p>Abaixo segue uma breve legenda.</p>',
                 '<table><tr><th style="text-align: center;">Ícone</th><th style="text-align: center;">Significado</th></tr>',
                 '<tr><td><img class="leg" src="/assets/marker-person.png"></td>',
                 '<td>Sua localização se disponível.</td></tr>',
