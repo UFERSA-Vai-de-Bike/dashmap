@@ -105,7 +105,7 @@ function setBkMarker(bike) {
 function initMap() {
     map = L.map('mapid').setView(ufersaLatLng, 17); // zoom max 18
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '<a href="https://github.com/UFERSA-Vai-de-Bike">UFERSA Vai de Bike</a> | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contribuidores'
     }).addTo(map);
 
     // markerscluster
@@ -120,7 +120,7 @@ function initMap() {
     welcomeBtn.disable();
 
     // dialog de legenda
-    welcomeDialog = L.control.dialog({anchor:[3,50],position: 'topleft'})
+    welcomeDialog = L.control.dialog({anchor:[3,50],position: 'topleft',size:[350,350]})
           .setContent(welcontent)
           .addTo(map);
     
@@ -132,7 +132,7 @@ function initMap() {
     // logo do projeto
     L.control.custom({
         position: 'bottomright',
-        content : '<img src="/assets/logo.png" class="img-thumbnail">',
+        content : '<a href="https://www.facebook.com/ufersavaidebike/"><img src="/assets/logo.png" class="img-thumbnail"></a>',
         style   :
         {
             height: '100px',
@@ -448,9 +448,9 @@ function setStContent(station) {
     return ct;
 }
 
-var welcontent = ['<h2>UFERSA Vai de Bike</h2><p>Bem vindo ao mapa do sistema UFERSA Vai de bike.',
-
-                '<p><b>Isto é só uma simulação!</b> Não é o sistema em funcionamento.</p>',
+var welcontent = ['<h2><a href="https://www.facebook.com/ufersavaidebike/">UFERSA Vai de bike</a></h2><p>Bem vindo ao mapa do sistema <a href="https://www.facebook.com/ufersavaidebike/">UFERSA Vai de bike</a>.',
+                '<h3><a href="https://www.vakinha.com.br/vaquinha/apoio-ao-projeto-ufersa-vai-de-bike">Apoie</a> o projeto!</h3><p>Contribua em nossa <a href="https://www.vakinha.com.br/vaquinha/apoio-ao-projeto-ufersa-vai-de-bike">vakinha</a> online</p><br>',
+                '<p>Isto é só uma simulação. Não é o sistema em funcionamento.</p>',
                 '<p>Abaixo segue uma breve legenda.</p>',
                 '<table><tr><th style="text-align: center;">Ícone</th><th style="text-align: center;">Significado</th></tr>',
                 '<tr><td><img class="leg" src="/assets/marker-person.png"></td>',
